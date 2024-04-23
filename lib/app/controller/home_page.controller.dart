@@ -26,8 +26,8 @@ class HomePageController {
   /// do vídeo contido nessa URL. Se a URL não contiver um ID de vídeo válido,
   /// a função retorna uma string vazia.
   String extractVideoId(String url) {
-    var regExp = RegExp(r"(?<=v=)[a-zA-Z0-9_-]+");
-    var match = regExp.firstMatch(url);
+    RegExp regExp = RegExp(r"(?<=v=|youtu\.be\/)[a-zA-Z0-9_-]+");
+    final match = regExp.firstMatch(url);
     return match?.group(0) ?? '';
   }
 
@@ -37,10 +37,8 @@ class HomePageController {
   /// um diretório em que deseja salvar um arquivo. Ele retorna um objeto Future que
   /// eventualmente contém o caminho do diretório selecionado.
   Future<String> pickSaveLocation() async {
-    String? result = await FilePicker.platform.getDirectoryPath();
-    return result!;
+    return (await FilePicker.platform.getDirectoryPath())!;
   }
-
 
   /// Baixa um vídeo do YouTube como arquivo MP3 ou MP4.
   ///
