@@ -4,11 +4,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import '../enum/type.enum.dart';
+
 class HomePageController {
   // Instância única da classe
   static final HomePageController _instance = HomePageController._internal();
 
   final ValueNotifier<String> _message = ValueNotifier('');
+
+  final yt = YoutubeExplode();
+
+  final ValueNotifier<DownloadType> _type = ValueNotifier(DownloadType.video);
 
   // Construtor privado
   HomePageController._internal();
@@ -18,6 +24,15 @@ class HomePageController {
     return _instance;
   }
 
+  // Pega o valor referente ao tipo de formato
+  ValueNotifier<DownloadType> get type => _type;
+
+  // Seta o valor referente ao tipo de formato
+  set typex(DownloadType tp) {
+    _type.value = tp;
+  }
+
+  // Pega o valor da mensagem
   ValueNotifier<String> get message => _message;
 
   /// Extrai o ID de um vídeo do YouTube a partir de uma URL.
@@ -47,8 +62,7 @@ class HomePageController {
   /// Lança exceções [YoutubeExplodeException] em caso de erro com a biblioteca
   /// YoutubeExplode, [SocketException] em caso de erro de conexão e
   /// exceções genéricas [Exception] para outros erros.
-  Future<void> downloadVideo(String url, String savePath) async {
-    var yt = YoutubeExplode();
+  Future<void> downloadMedia({required String url, required String savePath}) async {
 
     try {
       var videoId = extractVideoId(url);
@@ -57,24 +71,32 @@ class HomePageController {
         return;
       }
 
+      var video = await yt.videos.get(videoId);
+
+      //Retorna o titulo do video
+      String title = video.title;
+
       var manifest = await yt.videos.streamsClient.getManifest(videoId);
-      var audioStreamInfo = manifest.audioOnly.withHighestBitrate();
 
-      var file = File('$savePath/video.mp3');
-
-      try {
-        // Tenta abrir o arquivo para escrita
-        var fileStream = file.openWrite();
-
-        // Pipe para o arquivo em vez de usar .get
-        await yt.videos.streamsClient.get(audioStreamInfo).pipe(fileStream);
-
-        await fileStream.flush();
-        await fileStream.close();
-
-        _message.value = 'Download concluído! O arquivo foi salvo em: $savePath';
-      } catch (e) {
-        _message.value = 'Erro ao escrever o arquivo: $e';
+      switch (type.value) {
+        case DownloadType.audio:
+          var streamInfo = manifest.audioOnly.withHighestBitrate();
+          await _download(
+            savePath: savePath,
+            title: title,
+            streamInfo: streamInfo,
+            type: 'mp3'
+          );
+          break;
+        case DownloadType.video:
+          var streamInfo = manifest.muxed.bestQuality;
+          await _download(
+            savePath: savePath,
+            title: title,
+            streamInfo: streamInfo,
+            type: 'mp4'
+          );
+          break;
       }
     } on YoutubeExplodeException catch (e) {
       _message.value = 'Erro ao realizar o download: $e';
@@ -82,8 +104,22 @@ class HomePageController {
       _message.value = 'Erro de conexão: $e';
     } catch (e) {
       _message.value = 'Erro desconhecido: $e';
-    } finally {
-      yt.close();
     }
+  }
+
+  /// Realiza o download de um arquivo de vídeo de uma URL especificada e o salva localmente.
+  ///
+  /// Parâmetros:
+  ///   - [savePath]: O caminho onde o arquivo será salvo.
+  ///   - [title]: O título do arquivo.
+  ///   - [streamInfo]: Informações sobre o fluxo de vídeo. (E.g., URL do vídeo)
+  ///   - [type]: O tipo de arquivo (extensão), como "mp4".
+  Future<void> _download({required String savePath, required String title, dynamic streamInfo, required String type}) async{
+    var file = File('$savePath/$title.$type');
+    var fileStream = file.openWrite();
+    await yt.videos.streamsClient.get(streamInfo).pipe(fileStream);
+    await fileStream.flush();
+    await fileStream.close();
+    _message.value = 'Download concluído com sucesso! O arquivo foi salvo em: $savePath/$title.$type';
   }
 }
