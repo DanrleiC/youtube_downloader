@@ -1,7 +1,5 @@
 // ignore_for_file: library_private_types_in_public_api
 
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
