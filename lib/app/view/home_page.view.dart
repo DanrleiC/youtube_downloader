@@ -1,7 +1,11 @@
 // ignore_for_file: library_private_types_in_public_api
 
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
+import 'package:youtube_downloader/app/enum/type.enum.dart';
 
 class HomePageView extends StatefulWidget {
   const HomePageView({super.key});
@@ -14,7 +18,7 @@ class _HomePageViewState extends State<HomePageView> {
   final TextEditingController _urlController = TextEditingController();
   final HomePageController controller = HomePageController();
   
-  String _savePath = '';
+  String savePath = '';
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,8 @@ class _HomePageViewState extends State<HomePageView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _fieldUrl(),
+          _format(),
+          const SizedBox(height: 20.0),
           _downloadBtn(),
           const SizedBox(height: 20.0),
           _message()
@@ -50,12 +56,25 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
+  Widget _format(){
+    return ValueListenableBuilder(
+      valueListenable: controller.type,
+      builder: (context, value, child) => SegmentedButton(
+        segments: segments,
+        selected: <DownloadType>{controller.type.value},
+        onSelectionChanged: (Set newSelection) {
+          controller.typex = newSelection.first;
+        } 
+      ),
+    );
+  }
+
   Widget _downloadBtn(){
     return ElevatedButton(
       onPressed: () async {
-        _savePath = await controller.pickSaveLocation();
-        if (_savePath.isNotEmpty) {
-          controller.downloadVideo(_urlController.text, _savePath);
+        savePath = await controller.pickSaveLocation();
+        if (savePath.isNotEmpty) {
+          controller.downloadMedia(url: _urlController.text,savePath: savePath);
         } else {
           controller.message.value = 'Nenhum diretório selecionado.';
         }
@@ -63,12 +82,25 @@ class _HomePageViewState extends State<HomePageView> {
       child: const Text('Escolher Local e Baixar'),
     );
   }
+
   Widget _message(){
     return Text(
       controller.message.value
     );
   }
 
+  List<ButtonSegment<Enum>> get segments => const [
+    ButtonSegment(
+      value: DownloadType.audio,
+      label: Text('Audio'),
+      icon: Icon(FontAwesomeIcons.fileAudio)
+    ),
+    ButtonSegment(
+      value: DownloadType.video,
+      label: Text('Video'),
+      icon: Icon(FontAwesomeIcons.fileVideo)
+    ),
+  ];
 
   @override
   void dispose() {
