@@ -34,6 +34,8 @@ class _HomePageViewState extends State<HomePageView> {
           _fieldUrl(),
           _format(),
           const SizedBox(height: 20.0),
+          _title(),
+          const SizedBox(height: 20.0),
           _downloadBtn(),
           const SizedBox(height: 20.0),
           _message()
@@ -50,6 +52,7 @@ class _HomePageViewState extends State<HomePageView> {
         decoration: const InputDecoration(
           labelText: 'Insira a URL do vídeo do YouTube',
         ),
+        onChanged: (value) => controller.getVideoInfo(url: _urlController.text, context: context),
       ),
     );
   }
@@ -67,12 +70,32 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
+  Widget _title(){
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: ValueListenableBuilder(
+        valueListenable: controller.titleTextController,
+        builder: (context, value, child) => TextField(
+          controller: controller.titleTextController,
+          decoration: InputDecoration(
+            // labelStyle: const TextStyle(
+            //   color: Colors.white
+            // ),
+            labelText: 'Título do vídeo',
+            errorText: controller.errorText.value,
+          ),
+          onChanged: (value) => controller.validateInput(value)
+        ),
+      ),
+    );
+  }
+
   Widget _downloadBtn(){
     return ElevatedButton(
       onPressed: () async {
         savePath = await controller.pickSaveLocation();
         if (savePath.isNotEmpty) {
-          controller.downloadMedia(url: _urlController.text,savePath: savePath);
+          controller.downloadMedia(savePath: savePath);
         } else {
           controller.message.value = 'Nenhum diretório selecionado.';
         }
