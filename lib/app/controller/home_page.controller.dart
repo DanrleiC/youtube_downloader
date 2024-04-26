@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+import 'package:youtube_downloader/app/components/loading.component.dart';
 
 import '../enum/type.enum.dart';
 
@@ -10,11 +13,13 @@ class HomePageController {
   // Instância única da classe
   static final HomePageController _instance = HomePageController._internal();
 
-  final ValueNotifier<String> _message = ValueNotifier('');
-
   final yt = YoutubeExplode();
+  final _message = ValueNotifier<String>('');
+  final _errorText = ValueNotifier<String?>(null);
+  final _titleTextController = TextEditingController();
+  final _type = ValueNotifier<DownloadType>(DownloadType.audio);
 
-  final ValueNotifier<DownloadType> _type = ValueNotifier(DownloadType.video);
+  String videoId = '';
 
   // Construtor privado
   HomePageController._internal();
@@ -22,6 +27,13 @@ class HomePageController {
   // Método estático para acessar a instância única
   factory HomePageController() {
     return _instance;
+  }
+
+  // Pega o valor do titulo
+  TextEditingController get titleTextController => _titleTextController;
+
+  set titleTextControllerx(String title){
+    _titleTextController.text = title;
   }
 
   // Pega o valor referente ao tipo de formato
@@ -35,6 +47,27 @@ class HomePageController {
   // Pega o valor da mensagem
   ValueNotifier<String> get message => _message;
 
+  ValueNotifier<String?> get errorText => _errorText;
+
+  /// Obtém informações de um vídeo a partir de sua URL.
+  ///
+  /// Esta função:
+  ///   - Extrai o ID do vídeo da URL fornecida.
+  ///   - Utiliza o ID do vídeo para obter informações detalhadas do vídeo.
+  ///   - Processa o título do vídeo para formatação ou qualquer outra operação necessária.
+  ///   - Define o título processado em [titleTextControllerx] para exibição ao usuário.
+  Future<void> getVideoInfo({required String url, required BuildContext context}) async {
+    try {
+      Loading.show(context: context);
+      videoId = extractVideoId(url);
+      var video = await yt.videos.get(videoId);
+      String title = processesTitle(title: video.title);
+      titleTextControllerx = title;
+    } finally {
+      Loading.hide();
+    }
+  }
+
   /// Extrai o ID de um vídeo do YouTube a partir de uma URL.
   ///
   /// Esta função recebe uma URL de vídeo do YouTube como entrada e retorna o ID
@@ -44,6 +77,14 @@ class HomePageController {
     RegExp regExp = RegExp(r"(?<=v=|youtu\.be\/)[a-zA-Z0-9_-]+");
     final match = regExp.firstMatch(url);
     return match?.group(0) ?? '';
+  }
+
+  /// Remove as aspas duplas de uma string [title].
+  ///
+  /// Esta função recebe uma string [title] como entrada e remove todas as
+  /// ocorrências de aspas duplas ("") da string, retornando a string resultante.
+  String processesTitle({required String title}){
+    return title.replaceAll('"', '');
   }
 
   /// Obtém o caminho de um diretório selecionado pelo usuário para salvar um arquivo.
@@ -62,19 +103,13 @@ class HomePageController {
   /// Lança exceções [YoutubeExplodeException] em caso de erro com a biblioteca
   /// YoutubeExplode, [SocketException] em caso de erro de conexão e
   /// exceções genéricas [Exception] para outros erros.
-  Future<void> downloadMedia({required String url, required String savePath}) async {
+  Future<void> downloadMedia({required String savePath}) async {
 
     try {
-      var videoId = extractVideoId(url);
       if (videoId.isEmpty) {
         _message.value = 'URL inválida. Por favor, insira uma URL válida do YouTube.';
         return;
       }
-
-      var video = await yt.videos.get(videoId);
-
-      //Retorna o titulo do video
-      String title = video.title;
 
       var manifest = await yt.videos.streamsClient.getManifest(videoId);
 
@@ -83,7 +118,7 @@ class HomePageController {
           var streamInfo = manifest.audioOnly.withHighestBitrate();
           await _download(
             savePath: savePath,
-            title: title,
+            title: titleTextController.text,
             streamInfo: streamInfo,
             type: 'mp3'
           );
@@ -92,7 +127,7 @@ class HomePageController {
           var streamInfo = manifest.muxed.bestQuality;
           await _download(
             savePath: savePath,
-            title: title,
+            title: titleTextController.text,
             streamInfo: streamInfo,
             type: 'mp4'
           );
@@ -121,5 +156,14 @@ class HomePageController {
     await fileStream.flush();
     await fileStream.close();
     _message.value = 'Download concluído com sucesso! O arquivo foi salvo em: $savePath/$title.$type';
+  }
+
+  bool validateInput(String input) {
+    if (input.contains('"')) {
+      _errorText.value = 'Aspas duplas não são permitidas!';
+      return false;
+    }
+    _errorText.value = null;
+    return true;
   }
 }
