@@ -85,7 +85,7 @@ class HomePageController {
   /// Esta função recebe uma string [title] como entrada e remove todas as
   /// ocorrências de aspas duplas ("") da string, retornando a string resultante.
   String processesTitle({required String title}){
-    return title.replaceAll('"', '');
+    return title.replaceAll(RegExp(r'[\"\/]'), '');
   }
 
   /// Obtém o caminho de um diretório selecionado pelo usuário para salvar um arquivo.
