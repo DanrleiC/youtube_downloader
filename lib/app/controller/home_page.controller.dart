@@ -1,11 +1,12 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:youtube_downloader/app/view/settings_page_view.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'package:youtube_downloader/app/components/loading.component.dart';
+import 'package:youtube_downloader/app/view/settings_page.view.dart';
 
 import '../utils/enum/type.enum.dart';
 

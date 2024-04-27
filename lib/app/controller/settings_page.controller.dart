@@ -94,7 +94,7 @@ class SettingsPageController {
   /// 
   /// Proposito de reduzir o tamanho do codigo, tornando mais facil de entender.
   void _setUtilizeSavePath (bool value) {
-     _setPreference<bool>(PreferenceKeyEnum.utilizeSavePathButtonEnabled.key, value, utilizeSavePathButtonEnabled);
+    _setPreference<bool>(PreferenceKeyEnum.utilizeSavePathButtonEnabled.key, value, utilizeSavePathButtonEnabled);
   }
 
   /// Manipula o pressionamento do botão de seleção de local de salvamento.

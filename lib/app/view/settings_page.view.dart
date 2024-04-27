@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:youtube_downloader/app/controller/settings_page_controller.dart';
+import 'package:youtube_downloader/app/controller/settings_page.controller.dart';
 
 class SettingsPageView extends StatefulWidget {
- const SettingsPageView({super.key});
+  const SettingsPageView({super.key});
   
- @override
- createState() => _SettingsPageViewState();
+  @override
+  createState() => _SettingsPageViewState();
 }
 
 class _SettingsPageViewState extends State<SettingsPageView> {
