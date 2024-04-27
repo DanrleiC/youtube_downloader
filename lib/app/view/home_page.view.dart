@@ -1,15 +1,16 @@
-// ignore_for_file: library_private_types_in_public_api
-
+import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
-import 'package:youtube_downloader/app/enum/type.enum.dart';
+import 'package:youtube_downloader/app/utils/enum/type.enum.dart';
+import 'package:youtube_downloader/app/utils/show_widget_preference.dart';
+import 'package:youtube_downloader/app/utils/size_screen.dart';
 
 class HomePageView extends StatefulWidget {
   const HomePageView({super.key});
 
   @override
-  _HomePageViewState createState() => _HomePageViewState();
+  createState() => _HomePageViewState();
 }
 
 class _HomePageViewState extends State<HomePageView> {
@@ -25,21 +26,38 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
-  Widget _body(){
+  Widget _body() {
     return ValueListenableBuilder(
       valueListenable: controller.message,
-      builder: (context, value, child) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      builder: (context, value, child) => Stack(
         children: [
-          _fieldUrl(),
-          _format(),
-          const SizedBox(height: 20.0),
-          _title(),
-          const SizedBox(height: 20.0),
-          _downloadBtn(),
-          const SizedBox(height: 20.0),
-          _message()
-        ],
+          _buildSettingIcon(),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _fieldUrl(),
+              _unionWidgetPasteClean(),
+              _format(),
+              const SizedBox(height: 20.0),
+              _title(),
+              const SizedBox(height: 20.0),
+              _downloadBtn(),
+              const SizedBox(height: 20.0),
+              _message()
+            ],
+          ),
+        ]
+      ),
+    );
+  }
+
+  Widget _buildSettingIcon () {
+    return Positioned(
+      top: SizeScreen.sizeHeight(context, percentage: 0.05),
+      right: SizeScreen.sizeWidth(context, percentage: 0.05),
+      child: IconButton(
+        onPressed: () => controller.navigatePageSetting(context),
+        icon: const Icon(Icons.settings)
       ),
     );
   }
@@ -78,9 +96,6 @@ class _HomePageViewState extends State<HomePageView> {
         builder: (context, value, child) => TextField(
           controller: controller.titleTextController,
           decoration: InputDecoration(
-            // labelStyle: const TextStyle(
-            //   color: Colors.white
-            // ),
             labelText: 'Título do vídeo',
             errorText: controller.errorText.value,
           ),
@@ -90,17 +105,75 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
+  Widget _unionWidgetPasteClean() {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 20.0
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _cleanUlr(),
+          const SizedBox(width: 15.0),
+          _pasteUrl(),
+        ]
+      ),
+    );
+  }
+
+  Widget _pasteUrl () {
+    return ShowWidgetPreference(
+      keyPreference: 'pasteButtonEnabled',
+      child: ElevatedButton(
+        onPressed: () async => controller.getVideoInfo(url: _urlController.text = await FlutterClipboard.paste(), context: context),
+        child: const Text('Colar'),
+      ),
+    );
+  }
+
+  Widget _cleanUlr () {
+    return ShowWidgetPreference(
+      keyPreference: 'clearButtonEnabled',
+      child: ElevatedButton(
+        onPressed: () => _urlController.text = '',
+        child: const Text('Limpar'),
+      ),
+    );
+  }
+
   Widget _downloadBtn(){
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildChooseLocationAndDownloadButton(),
+        const SizedBox(width: 15),
+        _buildDownloadButton(),
+      ],
+    );
+  }
+
+  Widget _buildChooseLocationAndDownloadButton() {
     return ElevatedButton(
-      onPressed: () async {
-        savePath = await controller.pickSaveLocation();
-        if (savePath.isNotEmpty) {
-          controller.downloadMedia(savePath: savePath);
-        } else {
-          controller.message.value = 'Nenhum diretório selecionado.';
-        }
-      },
+      onPressed: () => controller.onPressChooseLocationAndDownload(context),
       child: const Text('Escolher Local e Baixar'),
+    );
+  }
+
+  Widget _buildDownloadButton() {
+    return ShowWidgetPreference(
+      keyPreference: 'utilizeSavePathButtonEnabled',
+      child: ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+        ),
+        onPressed: () => controller.onPressDownload(context),
+        child: const Text(
+          'Baixar',
+          style: TextStyle(
+            color: Colors.black
+          ),
+        ),
+      ),
     );
   }
 

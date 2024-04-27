@@ -1,13 +1,13 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:youtube_downloader/app/view/settings_page_view.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'package:youtube_downloader/app/components/loading.component.dart';
 
-import '../enum/type.enum.dart';
+import '../utils/enum/type.enum.dart';
 
 class HomePageController {
   // Instância única da classe
@@ -103,9 +103,10 @@ class HomePageController {
   /// Lança exceções [YoutubeExplodeException] em caso de erro com a biblioteca
   /// YoutubeExplode, [SocketException] em caso de erro de conexão e
   /// exceções genéricas [Exception] para outros erros.
-  Future<void> downloadMedia({required String savePath}) async {
-
+  Future<void> downloadMedia({required String savePath, required BuildContext context}) async {
     try {
+      Loading.show(context: context);
+
       if (videoId.isEmpty) {
         _message.value = 'URL inválida. Por favor, insira uma URL válida do YouTube.';
         return;
@@ -139,6 +140,8 @@ class HomePageController {
       _message.value = 'Erro de conexão: $e';
     } catch (e) {
       _message.value = 'Erro desconhecido: $e';
+    } finally {
+      Loading.hide();
     }
   }
 
@@ -165,5 +168,37 @@ class HomePageController {
     }
     _errorText.value = null;
     return true;
+  }
+
+  void navigatePageSetting(BuildContext context) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPageView()));
+  }
+
+  /// Função assíncrona para lidar com o evento de escolha de local e download.
+  ///
+  /// Esta função:
+  ///   - Chama `pickSaveLocation` do controller para permitir que o usuário escolha um local de salvamento.
+  ///   - Se um local válido for selecionado, chama `downloadMedia` do controller para iniciar o download do vídeo.
+  ///   - Se nenhum local for selecionado, define a mensagem de erro no controller informando que nenhum diretório foi selecionado.
+  void onPressChooseLocationAndDownload(BuildContext context) async {
+    final savePath = await pickSaveLocation();
+    if (savePath.isNotEmpty) {
+      downloadMedia(savePath: savePath, context: context);
+    } else {
+      message.value = 'Nenhum diretório selecionado.';
+    }
+  }
+
+  /// Função assíncrona para lidar com o evento de download ( Botão de download direto, presente na home page ).
+  ///
+  /// Esta função:
+  ///   - Obtém o caminho de salvamento do diretório preferencial das configurações.
+  ///   - Se um caminho válido for encontrado, chama `downloadMedia` do controller para iniciar o download do vídeo.
+  void onPressDownload(BuildContext context) async {
+    final pref = await SharedPreferences.getInstance();
+    final valor = pref.getString('savePath');
+    if (valor != null) {
+      downloadMedia(savePath: valor, context: context);
+    }
   }
 }
