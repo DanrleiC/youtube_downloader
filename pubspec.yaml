@@ -18,6 +18,8 @@ dependencies:
   file_picker: ^8.0.0+1
   font_awesome_flutter: ^10.7.0
   flutter_overlay_loader: ^2.0.0
+  clipboard: ^0.1.2
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:
