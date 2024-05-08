@@ -1,5 +1,6 @@
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
 import 'package:youtube_downloader/app/utils/enum/type.enum.dart';
@@ -35,14 +36,14 @@ class _HomePageViewState extends State<HomePageView> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _fieldUrl(),
-              _unionWidgetPasteClean(),
-              _format(),
-              const SizedBox(height: 20.0),
+              _columLine(),
+              _height,
+              _listFormat(),
+              _height,
               _title(),
-              const SizedBox(height: 20.0),
+              _height,
               _downloadBtn(),
-              const SizedBox(height: 20.0),
+              _height,
               _message()
             ],
           ),
@@ -51,7 +52,18 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
-  Widget _buildSettingIcon () {
+  Widget get _height => const SizedBox(height: 20.0);
+
+  Widget _columLine(){
+    return Row(
+      children: [
+        Expanded(child: _fieldUrl()),
+        _unionWidgetPasteClean()
+      ],
+    );
+  }
+
+  Widget _buildSettingIcon() {
     return Positioned(
       top: SizeScreen.sizeHeight(context, percentage: 0.05),
       right: SizeScreen.sizeWidth(context, percentage: 0.05),
@@ -71,6 +83,19 @@ class _HomePageViewState extends State<HomePageView> {
           labelText: 'Insira a URL do vídeo do YouTube',
         ),
         onChanged: (value) => controller.getVideoInfo(url: _urlController.text, context: context),
+      ),
+    );
+  }
+
+  Widget _listFormat(){
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Escolha o forma da mídia: '),
+          _format()
+        ],
       ),
     );
   }
@@ -124,9 +149,10 @@ class _HomePageViewState extends State<HomePageView> {
   Widget _pasteUrl () {
     return ShowWidgetPreference(
       keyPreference: 'pasteButtonEnabled',
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: () async => controller.getVideoInfo(url: _urlController.text = await FlutterClipboard.paste(), context: context),
-        child: const Text('Colar'),
+        icon: const Icon(FontAwesomeIcons.paste),
+        label: const Text('Colar'),
       ),
     );
   }
@@ -134,9 +160,10 @@ class _HomePageViewState extends State<HomePageView> {
   Widget _cleanUlr () {
     return ShowWidgetPreference(
       keyPreference: 'clearButtonEnabled',
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: () => _urlController.text = '',
-        child: const Text('Limpar'),
+        icon: const Icon(FontAwesomeIcons.broom),
+        label: const Text('Limpar'),
       ),
     );
   }
