@@ -84,7 +84,7 @@ class HomePageController {
   ///
   /// Esta função recebe uma string [title] como entrada e remove todas as ocorrências
   String processesTitle({required String title}){
-    return title.replaceAll(RegExp(r'[\"\/]'), '');
+    return title.replaceAll(RegExp(r'["\/\|]'), '');
   }
 
   /// Obtém o caminho de um diretório selecionado pelo usuário para salvar um arquivo.
