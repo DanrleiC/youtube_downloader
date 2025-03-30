@@ -11,7 +11,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'YouTube Downloader',
       home: const HomePageView(),
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.system,
       darkTheme: AppTheme.dark,
       theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
