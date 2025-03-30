@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -116,12 +117,9 @@ class HomePageController {
 
       switch (type.value) {
         case DownloadType.audio:
-          var streamInfo = manifest.audioOnly.withHighestBitrate();
-          await _download(
+          await _downloadAudio(
             savePath: savePath,
             title: titleTextController.text,
-            streamInfo: streamInfo,
-            type: 'mp3'
           );
           break;
         case DownloadType.video:
@@ -159,6 +157,66 @@ class HomePageController {
     await fileStream.flush();
     await fileStream.close();
     _message.value = 'Download concluído com sucesso! O arquivo foi salvo em: $savePath/$title.$type';
+  }
+
+  Future<void> _downloadAudio({required String savePath, required String title}) async {
+    // Obtém o manifesto de streams do vídeo
+    var manifest = await yt.videos.streamsClient.getManifest(videoId);
+
+    // Seleciona o melhor stream de áudio disponível
+    var bestAudio = manifest.audio.withHighestBitrate();
+
+    // Define os caminhos dos arquivos
+    var tempFilePath = '$savePath/$title.temp';
+    var finalFilePath = '$savePath/$title.mp3';
+
+    File file;
+    Platform.isWindows? file = File(tempFilePath) : file = File(finalFilePath);
+
+    var fileStream = file.openWrite();
+
+    // Faz o download do áudio e salva no arquivo temporário
+    var audioStream = yt.videos.streamsClient.get(bestAudio);
+    await audioStream.pipe(fileStream);
+
+    await fileStream.flush();
+    await fileStream.close();
+
+    if (Platform.isWindows) {
+      _message.value = 'Download concluído. Iniciando conversão para MP3...';
+
+      // Converte o arquivo para MP3
+      await convertToMp3(tempFilePath, finalFilePath);
+
+      // Remove o arquivo temporário
+      await File(tempFilePath).delete();  
+    }
+
+    _message.value = 'Arquivo final salvo em: $finalFilePath';
+  }
+
+  /// Converte um arquivo de áudio para MP3 usando FFmpeg.
+  Future<void> convertToMp3(String inputPath, String outputPath) async {
+
+    //TODO: verificar para Embeddar o Executável do FFmpeg no projeto para que não seja necessário o usuário fazer o download de mais nada somente do projeto
+    String ffmpegPath = 'D:\\ffmpeg\\bin\\ffmpeg.exe';
+
+    ProcessResult result = await Process.run(ffmpegPath, [
+      '-i', inputPath,
+      '-acodec', 'libmp3lame',
+      '-b:a', '192k',
+      outputPath
+    ]);
+
+    if (result.exitCode == 0) {
+      if (kDebugMode) {
+        print('Conversão concluída: $outputPath');
+      }
+    } else {
+      if (kDebugMode) {
+        print('Erro na conversão: ${result.stderr}');
+      }
+    }
   }
 
   bool validateInput(String input) {
