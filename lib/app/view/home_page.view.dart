@@ -27,6 +27,22 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
+  AppBar appBar() {
+    return AppBar(
+      title: const Row(
+        children: [
+          Icon(FontAwesomeIcons.youtube),
+          SizedBox(width: 10),
+          Text('YouTube Downloader'),
+        ],
+      ),
+      elevation: 1,
+      actions: [
+        _buildSettingIcon(),
+      ],
+    );
+  }
+
   Widget _body() {
     return ValueListenableBuilder(
       valueListenable: controller.message,
