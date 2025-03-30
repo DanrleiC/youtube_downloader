@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
 import 'package:youtube_downloader/app/utils/enum/type.enum.dart';
 import 'package:youtube_downloader/app/utils/show_widget_preference.dart';
-import 'package:youtube_downloader/app/utils/size_screen.dart';
 
 class HomePageView extends StatefulWidget {
   const HomePageView({super.key});
@@ -23,6 +22,7 @@ class _HomePageViewState extends State<HomePageView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: appBar(),
       body: _body()
     );
   }
@@ -46,24 +46,19 @@ class _HomePageViewState extends State<HomePageView> {
   Widget _body() {
     return ValueListenableBuilder(
       valueListenable: controller.message,
-      builder: (context, value, child) => Stack(
+      builder: (context, value, child) => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildSettingIcon(),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _columLine(),
-              _height,
-              _listFormat(),
-              _height,
-              _title(),
-              _height,
-              _downloadBtn(),
-              _height,
-              _message()
-            ],
-          ),
-        ]
+          _columLine(),
+          _height,
+          _listFormat(),
+          _height,
+          _title(),
+          _height,
+          _downloadBtn(),
+          _height,
+          _message()
+        ],
       ),
     );
   }
@@ -80,25 +75,38 @@ class _HomePageViewState extends State<HomePageView> {
   }
 
   Widget _buildSettingIcon() {
-    return Positioned(
-      top: SizeScreen.sizeHeight(context, percentage: 0.05),
-      right: SizeScreen.sizeWidth(context, percentage: 0.05),
-      child: IconButton(
-        onPressed: () => controller.navigatePageSetting(context),
-        icon: const Icon(Icons.settings)
-      ),
+    return IconButton(
+      onPressed: () => controller.navigatePageSetting(context),
+      icon: const Icon(Icons.settings)
     );
   }
 
-  Widget _fieldUrl(){
+  InputDecoration inputDecoration({required String label, String? errorText}) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10), // Borda arredondada
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey), // Cor quando não está focado
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary), // Cor e espessura ao focar
+      ),
+      errorText: errorText
+    );
+  }
+
+  Widget _fieldUrl() {
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: TextField(
         controller: _urlController,
-        decoration: const InputDecoration(
-          labelText: 'Insira a URL do vídeo do YouTube',
+        decoration: inputDecoration(label: 'Insira a URL do vídeo do YouTube'),
+        onChanged: (value) => controller.getVideoInfo(
+          url: _urlController.text,
+          context: context,
         ),
-        onChanged: (value) => controller.getVideoInfo(url: _urlController.text, context: context),
       ),
     );
   }
@@ -136,8 +144,8 @@ class _HomePageViewState extends State<HomePageView> {
         valueListenable: controller.titleTextController,
         builder: (context, value, child) => TextField(
           controller: controller.titleTextController,
-          decoration: InputDecoration(
-            labelText: 'Título do vídeo',
+          decoration: inputDecoration(
+            label: 'Título do vídeo',
             errorText: controller.errorText.value,
           ),
           onChanged: (value) => controller.validateInput(value)
