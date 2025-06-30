@@ -28,8 +28,9 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-
   uses-material-design: true  
+  assets:
+    - assets/ffmpeg/ffmpeg.exe
 
 flutter_launcher_icons:
   android: "launcher_icon"

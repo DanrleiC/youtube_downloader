@@ -11,8 +11,6 @@ extension PreferenceKeyExtension on PreferenceKeyEnum {
         return 'savePath';
       case PreferenceKeyEnum.utilizeSavePathButtonEnabled:
         return 'utilizeSavePathButtonEnabled';
-      default:
-        throw Exception('Chave de preferência desconhecida');
-    }
+      }
   }
 }

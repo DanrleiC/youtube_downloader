@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -198,8 +200,7 @@ class HomePageController {
   /// Converte um arquivo de áudio para MP3 usando FFmpeg.
   Future<void> convertToMp3(String inputPath, String outputPath) async {
 
-    //TODO: verificar para Embeddar o Executável do FFmpeg no projeto para que não seja necessário o usuário fazer o download de mais nada somente do projeto
-    String ffmpegPath = 'D:\\ffmpeg\\bin\\ffmpeg.exe';
+    String ffmpegPath = await getBundledFfmpegPath(); 
 
     ProcessResult result = await Process.run(ffmpegPath, [
       '-i', inputPath,
@@ -217,6 +218,15 @@ class HomePageController {
         print('Erro na conversão: ${result.stderr}');
       }
     }
+  }
+
+  Future<String> getBundledFfmpegPath() async {
+    final byteData = await rootBundle.load('assets/ffmpeg/ffmpeg.exe');
+    final tempDir = await getTemporaryDirectory();
+    final ffmpegFile = File('${tempDir.path}/ffmpeg.exe');
+
+    await ffmpegFile.writeAsBytes(byteData.buffer.asUint8List());
+    return ffmpegFile.path;
   }
 
   bool validateInput(String input) {
