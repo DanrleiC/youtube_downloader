@@ -11,7 +11,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:youtube_downloader/app/components/loading.component.dart';
 import 'package:youtube_downloader/app/view/settings_page.view.dart';
 
-import '../utils/enum/type.enum.dart';
+import '../utils/enum/download_type.enum.dart';
 
 class HomePageController {
   // Instância única da classe
@@ -21,7 +21,7 @@ class HomePageController {
   final _message = ValueNotifier<String>('');
   final _errorText = ValueNotifier<String?>(null);
   final _titleTextController = TextEditingController();
-  final _type = ValueNotifier<DownloadType>(DownloadType.audio);
+  final _type = ValueNotifier<DownloadTypeEnum>(DownloadTypeEnum.audio);
 
   String videoId = '';
 
@@ -41,10 +41,10 @@ class HomePageController {
   }
 
   // Pega o valor referente ao tipo de formato
-  ValueNotifier<DownloadType> get type => _type;
+  ValueNotifier<DownloadTypeEnum> get type => _type;
 
   // Seta o valor referente ao tipo de formato
-  set typex(DownloadType tp) {
+  set typex(DownloadTypeEnum tp) {
     _type.value = tp;
   }
 
@@ -118,13 +118,13 @@ class HomePageController {
       var manifest = await yt.videos.streamsClient.getManifest(videoId);
 
       switch (type.value) {
-        case DownloadType.audio:
+        case DownloadTypeEnum.audio:
           await _downloadAudio(
             savePath: savePath,
             title: titleTextController.text,
           );
           break;
-        case DownloadType.video:
+        case DownloadTypeEnum.video:
           var streamInfo = manifest.muxed.bestQuality;
           await _download(
             savePath: savePath,
