@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_downloader/app/configs/theme/app_theme.dart';
+import 'package:youtube_downloader/app/configs/theme/app_data.theme.dart';
 
 import 'view/home_page.view.dart';
 
@@ -12,8 +12,8 @@ class App extends StatelessWidget {
       title: 'YouTube Downloader',
       home: const HomePageView(),
       themeMode: ThemeMode.system,
-      darkTheme: AppTheme.dark,
-      theme: AppTheme.light,
+      darkTheme: AppDataTheme.dark,
+     // theme: AppDataTheme.light,
       debugShowCheckedModeBanner: false,
     );
   }

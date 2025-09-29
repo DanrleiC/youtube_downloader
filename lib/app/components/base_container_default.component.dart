@@ -4,13 +4,17 @@ class BaseContainerDefaultComponent extends StatelessWidget {
   final Widget child;
   final double? width;
   final double? height;
-
-  /// Cor de de fundo do container.
-  /// Caso não seja informado, será utilizado a cor padrão.
-  /// Ao passar o backgroundColor, o container terá uma borda com a mesma cor. (se necessário criar uma nova variavel para passar a cor especifica da borda)
+  final void Function()? onTap;
   final Color? backgroundColor;
 
-  const BaseContainerDefaultComponent({required this.child, super.key, this.backgroundColor, this.width, this.height});
+  const BaseContainerDefaultComponent({
+    required this.child,
+    super.key,
+    this.backgroundColor,
+    this.width,
+    this.height,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +22,16 @@ class BaseContainerDefaultComponent extends StatelessWidget {
       height: height,
       width: width,
       child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: child,
-        )
+        color: backgroundColor,
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12.0),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: child,
+          ),
+        ),
       ),
     );
   }
