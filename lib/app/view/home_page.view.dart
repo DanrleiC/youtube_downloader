@@ -1,22 +1,28 @@
+
 import 'package:clipboard/clipboard.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:youtube_downloader/app/components/my_app_bar.component.dart';
 import 'package:youtube_downloader/app/controller/home_page.controller.dart';
-import 'package:youtube_downloader/app/utils/enum/type.enum.dart';
+import 'package:youtube_downloader/app/utils/enum/download_type.enum.dart';
+import 'package:youtube_downloader/app/utils/extension/type_enum_extension.dart';
 import 'package:youtube_downloader/app/utils/show_widget_preference.dart';
 
 class HomePageView extends StatefulWidget {
   const HomePageView({super.key});
 
   @override
-  createState() => _HomePageViewState();
+  State<HomePageView> createState() => _HomePageViewState();
 }
 
 class _HomePageViewState extends State<HomePageView> {
-  final TextEditingController _urlController = TextEditingController();
   final HomePageController controller = HomePageController();
-  
-  String savePath = '';
+  final TextEditingController _urlController = TextEditingController();
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,229 +32,150 @@ class _HomePageViewState extends State<HomePageView> {
     );
   }
 
-  AppBar appBar() {
-    return AppBar(
-      title: const Row(
-        children: [
-          Icon(FontAwesomeIcons.youtube),
-          SizedBox(width: 10),
-          Text('YouTube Downloader'),
-        ],
-      ),
-      elevation: 1,
-      actions: [
-        _buildSettingIcon(),
-      ],
+  PreferredSizeWidget appBar() {
+    return MyAppBarComponent(
+      title: 'Youtube Downloader',
+      onSettingsPressed: () => controller.navigatePageSetting(context),
     );
   }
 
   Widget _body() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: ValueListenableBuilder(
+        valueListenable: controller.message,
+        builder: (context, value, child) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 40,
+          children: [
+            _fieldUrl(),
+            _formatSelector(),
+            _titleField(),
+            _downloadButton(),
+            _statusMessage(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Campo de URL
+  Widget _fieldUrl() {
+    return Column(
+      spacing: 10,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('URL do Vídeo'),
+        TextField(
+          controller: _urlController,
+          decoration: const InputDecoration(
+            hintText: "Insira a URL do vídeo...",
+          ),
+          onChanged: (value) => controller.getVideoInfo(
+            url: _urlController.text,
+            context: context,
+          ),
+        ),
+        _buttonsPasteClean(),
+      ],
+    );
+  }
+
+  /// Botões colar e limpar
+  Widget _buttonsPasteClean() {
+    return Row(
+      spacing: 16,
+      children: [
+        ShowWidgetPreference(
+          keyPreference: 'clearButtonEnabled',
+          child: ElevatedButton(
+            onPressed: () => _urlController.clear(),
+            child: const Text("Limpar"),
+          ),
+        ),
+        ShowWidgetPreference(
+          keyPreference: 'pasteButtonEnabled',
+          child: ElevatedButton(
+            onPressed: () async {
+              _urlController.text = await FlutterClipboard.paste();
+              controller.getVideoInfo(
+                url: _urlController.text,
+                context: context,
+              );
+            },
+            child: const Text("Colar"),
+          ),
+        ),
+      ].map((e) => Expanded(child: e)).toList(growable: false)
+    );
+  }
+
+  /// Escolha de formato (Áudio ou Vídeo)
+  Widget _formatSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        const Text("Escolha o formato da mídia"),
+        ValueListenableBuilder<DownloadTypeEnum>(
+          valueListenable: controller.type,
+          builder: (context, value, child) => Row(
+            spacing: 15,
+            children: DownloadTypeEnum.values.map((e) {
+              return Expanded(
+                child: ElevatedButton(
+                  style: ButtonStyle().copyWith(
+                    foregroundColor: WidgetStatePropertyAll(value == e ? Colors.black : null),
+                    backgroundColor: WidgetStatePropertyAll(value == e ? Colors.white : null)
+                  ),
+                  onPressed: () => controller.type.value = e,
+                  child: Text(e.title),
+                ),
+              );
+            }).toList()
+          ),
+        )
+      ],
+    );
+  }
+
+  /// Campo de título do arquivo
+  Widget _titleField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        Text('Título do arquivo'),
+        TextField(
+          controller: controller.titleTextController,
+          decoration: const InputDecoration(
+            hintText: "Nome do arquivo",
+          ),
+          onChanged: (value) => controller.validateInput(value),
+        ),
+      ],
+    );
+  }
+
+  /// Botão de download
+  Widget _downloadButton() {
+    return ElevatedButton.icon(
+      onPressed: () => controller.onPressChooseLocationAndDownload(context),
+      icon: const Icon(Icons.download),
+      label: const Text("Escolher Local e Baixar"),
+    );
+  }
+
+  /// Mensagem de status
+  Widget _statusMessage() {
     return ValueListenableBuilder(
       valueListenable: controller.message,
-      builder: (context, value, child) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _columLine(),
-          _height,
-          _listFormat(),
-          _height,
-          _title(),
-          _height,
-          _downloadBtn(),
-          _height,
-          _message()
-        ],
+      builder: (context, value, child) => Text(
+        value,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14),
       ),
     );
-  }
-
-  Widget get _height => const SizedBox(height: 20.0);
-
-  Widget _columLine(){
-    return Row(
-      children: [
-        Expanded(child: _fieldUrl()),
-        _unionWidgetPasteClean()
-      ],
-    );
-  }
-
-  Widget _buildSettingIcon() {
-    return IconButton(
-      onPressed: () => controller.navigatePageSetting(context),
-      icon: const Icon(Icons.settings)
-    );
-  }
-
-  InputDecoration inputDecoration({required String label, String? errorText}) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10), // Borda arredondada
-      ),
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey), // Cor quando não está focado
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary), // Cor e espessura ao focar
-      ),
-      errorText: errorText
-    );
-  }
-
-  Widget _fieldUrl() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: TextField(
-        controller: _urlController,
-        decoration: inputDecoration(label: 'Insira a URL do vídeo do YouTube'),
-        onChanged: (value) => controller.getVideoInfo(
-          url: _urlController.text,
-          context: context,
-        ),
-      ),
-    );
-  }
-
-  Widget _listFormat(){
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text('Escolha o forma da mídia: '),
-          _format()
-        ],
-      ),
-    );
-  }
-
-  Widget _format(){
-    return ValueListenableBuilder(
-      valueListenable: controller.type,
-      builder: (context, value, child) => SegmentedButton(
-        segments: segments,
-        selected: <DownloadType>{controller.type.value},
-        onSelectionChanged: (Set newSelection) {
-          controller.typex = newSelection.first;
-        } 
-      ),
-    );
-  }
-
-  Widget _title(){
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: ValueListenableBuilder(
-        valueListenable: controller.titleTextController,
-        builder: (context, value, child) => TextField(
-          controller: controller.titleTextController,
-          decoration: inputDecoration(
-            label: 'Título do vídeo',
-            errorText: controller.errorText.value,
-          ),
-          onChanged: (value) => controller.validateInput(value)
-        ),
-      ),
-    );
-  }
-
-  Widget _unionWidgetPasteClean() {
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 20.0
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _cleanUlr(),
-          const SizedBox(width: 15.0),
-          _pasteUrl(),
-        ]
-      ),
-    );
-  }
-
-  Widget _pasteUrl () {
-    return ShowWidgetPreference(
-      keyPreference: 'pasteButtonEnabled',
-      child: ElevatedButton.icon(
-        onPressed: () async => controller.getVideoInfo(url: _urlController.text = await FlutterClipboard.paste(), context: context),
-        icon: const Icon(FontAwesomeIcons.paste),
-        label: const Text('Colar'),
-      ),
-    );
-  }
-
-  Widget _cleanUlr () {
-    return ShowWidgetPreference(
-      keyPreference: 'clearButtonEnabled',
-      child: ElevatedButton.icon(
-        onPressed: () => _urlController.text = '',
-        icon: const Icon(FontAwesomeIcons.broom),
-        label: const Text('Limpar'),
-      ),
-    );
-  }
-
-  Widget _downloadBtn(){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildChooseLocationAndDownloadButton(),
-        const SizedBox(width: 15),
-        _buildDownloadButton(),
-      ],
-    );
-  }
-
-  Widget _buildChooseLocationAndDownloadButton() {
-    return ElevatedButton(
-      onPressed: () => controller.onPressChooseLocationAndDownload(context),
-      child: const Text('Escolher Local e Baixar'),
-    );
-  }
-
-  Widget _buildDownloadButton() {
-    return ShowWidgetPreference(
-      keyPreference: 'utilizeSavePathButtonEnabled',
-      child: ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
-        ),
-        onPressed: () => controller.onPressDownload(context),
-        child: const Text(
-          'Baixar',
-          style: TextStyle(
-            color: Colors.black
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _message(){
-    return Text(
-      controller.message.value
-    );
-  }
-
-  List<ButtonSegment<Enum>> get segments => const [
-    ButtonSegment(
-      value: DownloadType.audio,
-      label: Text('Audio'),
-      icon: Icon(FontAwesomeIcons.fileAudio)
-    ),
-    ButtonSegment(
-      value: DownloadType.video,
-      label: Text('Video'),
-      icon: Icon(FontAwesomeIcons.fileVideo)
-    ),
-  ];
-
-  @override
-  void dispose() {
-    _urlController.dispose();
-    super.dispose();
   }
 }
